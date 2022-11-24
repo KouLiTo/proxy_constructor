@@ -1,0 +1,94 @@
+import urllib.request
+from urllib import request
+import sys
+import json
+import urllib
+from gevent import monkey
+
+monkey.patch_all()    # trying to request asynchronously
+
+
+class Proxys:   # class constructs a proxy ip
+    __proxies = []
+
+    class ProxyHandler:    # subclass within Proxys to request a given link with a proxy ip
+
+        def __init__(self, proxy, url=None):
+            self.__proxy = proxy
+            self.url = url
+
+        # two protected methods below set the proxy server to send requests
+        def __handler(self):
+            proxy_handler = urllib.request.ProxyHandler(self.__proxy)
+            return proxy_handler
+
+        def __opener(self):
+            opener = urllib.request.build_opener(self.__handler())
+            opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+            urllib.request.install_opener(opener)
+            return opener
+
+        # method sending request using the already implemented proxy
+        def __request(self):
+            self.__opener()
+            return request.urlopen(self.url)
+
+        # abstractly built-in method realizing the whole logic of the subcluss and presenting the result
+        def response(self):
+            try:
+                content = self.__request().read().decode()
+            except Exception as ex:
+                sys.exit(print(ex))
+            else:
+                print(content + "\n"*4)
+                return content
+
+
+    def __init__(self, url="https://public.freeproxyapi.com/api/Proxy/Mini"):
+        self.url = url
+
+    @property
+    def proxies(self):
+        print(self.__proxies)
+        return self.__proxies
+
+    @proxies.setter
+    def proxies(self, arg):
+        self.__proxies.append(arg)
+
+    def main_process(self):   # main process handling the whole script
+        n = int(input("How many proxy ips do you want to generate: "))
+        self.__gather_proxies(n)
+        self.proxies
+        link = input("Enter a link: ")
+        for proxy in self.proxies:
+            self.__use_case(proxy, link)
+
+    def __gather_proxies(self, n):
+        for i in range(n):
+            self.__get_ips()
+
+    def __get_ips(self):
+            try:
+                response = request.urlopen(self.url)
+                new_proxy = json.loads(response.read().decode())
+            except Exception as e:
+                sys.exit(print(e))
+            else:
+                return self.__create_adresses(new_proxy)
+
+    def __create_adresses(self, arg):
+        if isinstance(arg, dict):
+            proxy = {
+                "http": "http://"+f"""{arg["host"]}:{arg["port"]}"""  # urllib uses only http proxies
+                #"https": "http://"+f"""{arg["host"]}:{arg["port"]}""" # for requests library
+            }
+            self.proxies = proxy
+
+    def __use_case(self, proxy, link):
+        return Proxys.ProxyHandler(proxy, link).response()
+
+
+# abstraction, incapsulation are realised
+p = Proxys()
+p.main_process()
