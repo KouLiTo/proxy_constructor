@@ -2,6 +2,7 @@ import urllib.request
 from urllib import request
 import sys
 import json
+import time
 import urllib
 from gevent import monkey
 
@@ -47,6 +48,24 @@ class Proxys:   # class constructs a proxy ip
     def __init__(self, url="https://public.freeproxyapi.com/api/Proxy/Mini"):
         self.url = url
 
+    @staticmethod
+    def only_int():
+        try:
+            a = int(input("How many proxy ips do you want to generate: "))
+        except ValueError:
+            print("It must be an integer number. Try again")
+            return Proxys.only_int()
+        return a
+
+    @staticmethod
+    def link_input():
+        a = input("Enter url: ")
+        if a[:8] != "https://":
+            print("""Url must begin with "https://". Please try again""")
+            return Proxys.link_input()
+        else:
+            return a
+
     @property
     def proxies(self):
         print(self.__proxies)
@@ -57,10 +76,10 @@ class Proxys:   # class constructs a proxy ip
         self.__proxies.append(arg)
 
     def main_process(self):   # main process handling the whole script
-        n = int(input("How many proxy ips do you want to generate: "))
+        n = Proxys.only_int()
         self.__gather_proxies(n)
         self.proxies
-        link = input("Enter a link: ")
+        link = Proxys.link_input()
         for proxy in self.proxies:
             self.__use_case(proxy, link)
 
